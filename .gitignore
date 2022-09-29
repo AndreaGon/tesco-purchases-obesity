@@ -1,0 +1,8 @@
+#Ignore RData
+*.RData
+
+#Ignore dataset
+AreaLevel/*.csv
+Warehouse/*.csv
+FoodCategory/*.csv
+ValidationData/*.csv
