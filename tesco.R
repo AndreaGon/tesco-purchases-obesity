@@ -72,7 +72,7 @@ parallelIntegration <- function(){
   stopCluster(cl)
 }
 
-
+#Timing Parallel Integration vs Sequential Integration using Microbenchmark
 timing <- microbenchmark(sequentialIntegration(), parallelIntegration(), times=1)
 ggplot(data=timing, aes(x=expr, y=time)) +
   geom_bar(stat="identity")
@@ -85,15 +85,12 @@ children_obesity <- read.csv(paste(current_path,"/ValidationData/child_obesity_l
 adult_obesity <- read.csv(paste(current_path,"/ValidationData/london_obesity_borough_2012.csv", sep=""))
 diabetes <- read.csv(paste(current_path,"/ValidationData/diabetes_estimates_osward_2016.csv", sep=""))
 
-area_level_combined$representativeness_norm <- sapply(area_level_combined$representativeness_norm, as.factor)
-area_level_combined$representativeness_norm <- format(round(area_level_combined$representativeness_norm, 2), nsmall = 2)
+area_level_combined$representativeness_norm <- formatC(area_level_combined$representativeness_norm, digits = 2, format="f")
 
-
-##Representativeness
+#----------Descriptive Analysis----------
 
 #Borough population vs customers distribution
 borough_area <- area_level_combined[area_level_combined$area=="borough",]
-
 
 ggplot(borough_area, aes(x=population, y=..density..)) +  
   ggtitle("Distribution of Borough Residents") +
@@ -121,7 +118,6 @@ ggplot(ward_area, aes(x=man_day, y=..density..)) +
 
 
 
-
 ##Correlation between food consumption and obesity, overweight and diabetes
 
 #Borough area, adult obesity
@@ -131,7 +127,7 @@ merged_adult_borough <- merge(area_level_combined, adult_obesity, by = "area_id"
 ggpairs(merged_adult_borough, columns = c( "carb","fat", "sugar", "protein", "fibre", "f_obese"), title = "Prevalence of obese adult (Borough)", upper = list(continuous = wrap("cor",
                                                                                                                                                                                                                                size = 3)),
         lower = list(continuous = wrap("smooth",
-                                       alpha = 0.5,
+                                       alpha = 0.05,
                                        size = 0.1)))
 
 
@@ -139,7 +135,7 @@ merged_children_borough <- merge(area_level_combined, children_obesity, by = "ar
 ggpairs(merged_children_borough, columns = c( "carb","fat", "sugar", "protein", "fibre", "prevalence_obese_reception"), title = "Prevalence of obese children (Borough)", upper = list(continuous = wrap("cor",
                                                                                                                                                                                 size = 3)),
         lower = list(continuous = wrap("smooth",
-                                       alpha = 0.5,
+                                       alpha = 0.05,
                                        size = 0.1)))
 
 #Diabetes Prevalence (Ward level)
@@ -147,8 +143,32 @@ merged_diabetes <- merge(area_level_combined, diabetes, by = "area_id")
 ggpairs(merged_diabetes, columns = c("carb","fat", "sugar", "protein", "fibre", "estimated_diabetes_prevalence"), title = "Diabetes Prevalence (Ward)", upper = list(continuous = wrap("cor",
                                                                                                                                                                                             size = 3)),
         lower = list(continuous = wrap("smooth",
-                                       alpha = 0.5,
+                                       alpha = 0.05,
                                        size = 0.1)))
 
+
+#----------Hypothesis Testing----------
+#TEST NO. 1
+#H0: Fats consumption do not have an effect on diabetes
+#H1: Fats consumption have an effect on diabetes
+fat_model <- lm(estimated_diabetes_prevalence ~ fat, data=merged_diabetes)
+summary(fat_model)
+
+#TEST NO. 2
+#H0: Carbs consumption do not have an effect on diabetes
+#H1: Carbs consumption have an effect on diabetes
+carb_model <- lm(estimated_diabetes_prevalence ~ carb, data=merged_diabetes)
+summary(carb_model)
+
+#TEST NO. 3
+#H0: Sugar consumption do not have an effect on diabetes
+#H1: Sugar consumption have an effect on diabetes
+sugar_model <- lm(estimated_diabetes_prevalence ~ sugar, data=merged_diabetes)
+summary(sugar_model)
+
+#TEST NO. 4
+#Multiple Linear Regression
+mlr_model <- lm(estimated_diabetes_prevalence ~ fat + sugar + carb, data=merged_diabetes)
+summary(mlr_model)
 
 
